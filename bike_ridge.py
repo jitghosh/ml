@@ -43,7 +43,7 @@ train_loss: np.ndarray = []
 valid_loss: np.ndarray = []
 k = 7
 batch_size = 1000
-num_epochs = 6000
+num_epochs = 10000
 alpha = 0.0001
 learning_rate = 0.0001
 theta = np.random.randn(bike_train_X.shape[1],1)
@@ -70,7 +70,7 @@ for epoch in range(0,num_epochs):
         fold_valid_loss.append(calc_mse(valid_y_hat,valid_kfolds_y))
     train_loss.append(np.average(fold_train_loss))
     valid_loss.append(np.average(fold_valid_loss))
-    if(epoch % 25 == 0):
+    if(epoch % 100 == 0):
         print(f"epoch {epoch}: {train_loss[-1]}, {valid_loss[-1]}")
 
     if epoch > 1000 and np.average(valid_loss[-50:]) - np.average(valid_loss[-100:-50]) > 10:
