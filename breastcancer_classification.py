@@ -57,6 +57,7 @@ train_y = df_train_y.values.reshape(df_train_y.shape[0],1)
 valid_x = df_valid_x.values
 valid_y = df_valid_y.values.reshape(df_valid_y.shape[0],1)
 # %%
+'''
 train_loss: np.ndarray = []
 valid_loss: np.ndarray = []
 valid_accuracy : np.ndarray = []
@@ -80,5 +81,48 @@ for epoch in range(0,num_epochs):
     if epoch > 1000 and np.abs(np.average(valid_loss[-25:]) - np.average(valid_loss[-50:-25])) < 0.000025:
         print(f"stopping at epoch {epoch} - validation loss is not improving significantly")
         break
+'''
+# %%
+train_loss: np.ndarray = []
+valid_loss: np.ndarray = []
+valid_accuracy : np.ndarray = []
+k = 5
+batch_size = 25
+num_epochs = 25000
+learning_rate = 0.0001
+w = np.random.randn(df_train_x.shape[1],1)
 
+for epoch in range(0,num_epochs):
+    
+    fold_train_loss: np.ndarray = []
+    fold_valid_loss: np.ndarray = []
+    fold_valid_accuracy: np.ndarray = []
+    kfold = StratifiedKFold(n_splits = k, shuffle=True, random_state=1234)
+    for fold_idx_train, fold_idx_valid in kfold.split(train_x,train_y):
+        train_kfolds_X = train_x[fold_idx_train,:]
+        valid_kfolds_X = train_x[fold_idx_valid,:]
+        train_kfolds_y = train_y[fold_idx_train,:]
+        valid_kfolds_y = train_y[fold_idx_valid,:]
+        batch_count = train_kfolds_X.shape[0] // batch_size + (0 if train_kfolds_X.shape[0] % batch_size == 0 else 1)
+        for batch_idx in range(0,batch_count):
+            batch_X = train_kfolds_X[batch_idx*batch_size:(batch_idx + 1)*batch_size]
+            batch_y = train_kfolds_y[batch_idx*batch_size:(batch_idx + 1)*batch_size]
+            gradients = gradient_cross_entropy(batch_X,w,batch_y)
+            w = w - gradients * learning_rate
+        train_y_hat = sigmoid(np.dot(train_kfolds_X, w))
+        fold_train_loss.append(cross_entropy_loss(train_y_hat,train_kfolds_y))
+        valid_y_hat = sigmoid(np.dot(valid_kfolds_X, w))
+        fold_valid_loss.append(cross_entropy_loss(valid_y_hat,valid_kfolds_y))
+        fold_valid_accuracy.append(accuracy_score(predict(valid_y_hat),valid_kfolds_y))
+    train_loss.append(np.average(fold_train_loss))
+    valid_loss.append(np.average(fold_valid_loss))
+    valid_accuracy.append(np.average(fold_valid_accuracy))
+    if(epoch % 50 == 0):
+        print(f"epoch {epoch}: {train_loss[-1]}, {valid_loss[-1]}, {valid_accuracy[-1] * 100 : 0.02f}")
+
+    valid_loss_delta = np.average(valid_loss[-25:]) - np.average(valid_loss[-50:-25])
+                                                                
+    if epoch > 1000 and (valid_loss_delta > 0 or abs(valid_loss_delta) < 0.00025):
+        print(f"stopping at epoch {epoch} - validation loss is not improving")
+        break
 # %%
