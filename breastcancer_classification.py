@@ -77,7 +77,8 @@ for epoch in range(0,num_epochs):
     if(epoch % 50 == 0):
         print(f"epoch {epoch}: {train_loss[-1]}, {valid_loss[-1]}, {valid_accuracy[-1] * 100 : 0.02f}")
 
-    if epoch > 1000 and np.isclose(np.average(valid_loss[-25:]),np.average(valid_loss[-50:-25]),atol=0.00001):
+    if epoch > 1000 and np.abs(np.average(valid_loss[-25:]) - np.average(valid_loss[-50:-25])) < 0.000025:
         print(f"stopping at epoch {epoch} - validation loss is not improving significantly")
         break
+
 # %%
