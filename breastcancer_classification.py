@@ -16,7 +16,7 @@ def gradient_cross_entropy(x: np.ndarray, w: np.ndarray, y):
 
 def cross_entropy_loss(y_hat: np.ndarray, y: np.ndarray):
     # assume batch of mxn features. So x is mxn, w is nx1 and y is nx1 
-    return (-1 * np.sum(y.T@np.log(y_hat) + (1 - y).T@np.log(1 - y_hat)))/y.shape[0]
+    return (-1 * (y.T@np.log(y_hat) + (1 - y).T@np.log(1 - y_hat)))/y.shape[0]
 
 def predict(y_hat: np.ndarray, threshold: np.float32 = 0.25) -> np.ndarray:
     return np.int32(y_hat >= threshold)
@@ -87,7 +87,7 @@ train_loss: np.ndarray = []
 valid_loss: np.ndarray = []
 valid_accuracy : np.ndarray = []
 k = 5
-batch_size = 25
+batch_size = 45
 num_epochs = 25000
 learning_rate = 0.0001
 w = np.random.randn(df_train_x.shape[1],1)
@@ -108,6 +108,7 @@ for epoch in range(0,num_epochs):
             batch_X = train_kfolds_X[batch_idx*batch_size:(batch_idx + 1)*batch_size]
             batch_y = train_kfolds_y[batch_idx*batch_size:(batch_idx + 1)*batch_size]
             gradients = gradient_cross_entropy(batch_X,w,batch_y)
+            print(gradients)
             w = w - gradients * learning_rate
         train_y_hat = sigmoid(np.dot(train_kfolds_X, w))
         fold_train_loss.append(cross_entropy_loss(train_y_hat,train_kfolds_y))
@@ -125,4 +126,7 @@ for epoch in range(0,num_epochs):
     if epoch > 1000 and (valid_loss_delta > 0 or abs(valid_loss_delta) < 0.00025):
         print(f"stopping at epoch {epoch} - validation loss is not improving")
         break
+# %%
+-1 * np.sum(train_kfolds_y.T@np.log(train_y_hat) + (1 - train_kfolds_y).T@np.log(1 - train_y_hat))
+
 # %%
