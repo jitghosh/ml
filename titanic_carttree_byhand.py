@@ -31,12 +31,14 @@ class Node:
         self.left: Node = None
         self.X = X
         self.y = y
+        self.depth = 1 if parent is None else parent.depth + 1
         
         
 
 class DecisionTreeClassifier:
-    def __init__(self):
+    def __init__(self, max_depth = None):
         self.head = None
+        self.max_depth = None
 
     def fit(self, X: np.ndarray, y: np.ndarray, clsarr: set[int], categorical_col_idx: set[int]):
         self.head = Node(X,y,clsarr)
@@ -46,23 +48,29 @@ class DecisionTreeClassifier:
     def split(self, cur_node: Node, clsarr: set[int], categorical_col_idx: set[int], parent: Node = None):
         
         (gini_left,gini_right,feature_idx,split_at) = self.calculate_feature_to_split_based_on_min_cost(cur_node.X,cur_node.y,clsarr,categorical_col_idx)
-        if feature_idx is not None: # splittable
-            return None
+        
+        if feature_idx is None:
+            return
+        if gini_left < cur_node.gini or gini_right < cur_node.gini:
+            return
+        if parent is not None and parent.depth + 1 > self.max_depth:
+            return
+        
+        
+        cur_node.feature_idx = feature_idx
+        cur_node.categorical = feature_idx in categorical_col_idx
+        cur_node.split_at = split_at
+        if cur_node.categorical:
+            left_indices = np.argwhere(cur_node.X[:,feature_idx] == 0)
+            right_indices = np.argwhere(cur_node.X[:,feature_idx] == 1)
         else:
-            cur_node.feature_idx = feature_idx
-            cur_node.categorical = feature_idx in categorical_col_idx
-            cur_node.split_at = split_at
-            if cur_node.categorical:
-                left_indices = np.argwhere(cur_node.X[:,feature_idx] == 0)
-                right_indices = np.argwhere(cur_node.X[:,feature_idx] == 1)
-            else:
-                left_indices = np.argwhere(cur_node.X[:,feature_idx] < split_at)
-                right_indices = np.argwhere(cur_node.X[:,feature_idx] >= split_at)
-            cur_node.left = Node(cur_node.X[left_indices,:],cur_node.y[left_indices],clsarr,cur_node)
-            cur_node.right = Node(cur_node.X[right_indices,:],cur_node.y[right_indices],clsarr,cur_node)
+            left_indices = np.argwhere(cur_node.X[:,feature_idx] < split_at)
+            right_indices = np.argwhere(cur_node.X[:,feature_idx] >= split_at)
+        cur_node.left = Node(cur_node.X[left_indices,:],cur_node.y[left_indices],clsarr,cur_node)
+        cur_node.right = Node(cur_node.X[right_indices,:],cur_node.y[right_indices],clsarr,cur_node)
 
-            self.split(cur_node.left,clsarr,categorical_col_idx,cur_node)
-            self.split(cur_node.right,clsarr,categorical_col_idx,cur_node)
+        self.split(cur_node.left,clsarr,categorical_col_idx,cur_node)
+        self.split(cur_node.right,clsarr,categorical_col_idx,cur_node)
 
 
     def calculate_feature_to_split_based_on_min_cost(self, X: np.ndarray, y: np.ndarray, clsarr: set[int], categorical_col_idx: set[int]):
