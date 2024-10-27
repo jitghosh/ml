@@ -118,7 +118,7 @@ class DecisionTreeClassifier:
                 if cost[0,0] != None:
                     cost_arr = np.concatenate((cost_arr,cost),axis=0)
             else:                
-                possible_split_points = range(1,X.shape[0]-1)
+                possible_split_points = range(0,X.shape[0])
                 for split_point in possible_split_points:
                     cost_for_split_point = self.__calculate_cost_and_gini(xy,feature_idx,categorical=False,split_point=split_point)
                     if cost_for_split_point[0,0] != None:
