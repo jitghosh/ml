@@ -8,24 +8,6 @@ import os
 from collections import Counter
 
 
-
-#%%
-df_data = pd.read_csv("c:/pix/ml/titanic/train.csv")
-df_data = df_data.drop(["PassengerId","Name","Ticket","Cabin"],axis=1).dropna()
-
-df_X = df_data.drop("Survived",axis=1)
-df_y = df_data["Survived"]
-df_X = pd.get_dummies(df_X,columns=["Pclass","Sex","Embarked"])
-df_X = df_X.astype(float)
-
-train_X,test_X,train_y,test_y = train_test_split(df_X,df_y,test_size=0.15,stratify=df_y,shuffle=True,random_state=1234)
-# %%
-'''
-df_data = pd.read_csv("c:/pix/ml/iris.data",header=None)
-df_X = df_data.drop([4],axis=1)
-df_y = df_data[4]
-df_y = LabelEncoder().fit(["Iris-setosa","Iris-versicolor","Iris-virginica"]).transform(df_y)
-'''
 # %%
 class Node:
     def __init__(self, X: np.ndarray, y: np.ndarray, parent = None):
@@ -149,6 +131,15 @@ class DecisionTreeClassifier:
     
    
 #%%
+df_data = pd.read_csv("c:/pix/ml/titanic/train.csv")
+df_data = df_data.drop(["PassengerId","Name","Ticket","Cabin"],axis=1).dropna()
+
+df_X = df_data.drop("Survived",axis=1)
+df_y = df_data["Survived"]
+df_X = pd.get_dummies(df_X,columns=["Pclass","Sex","Embarked"])
+df_X = df_X.astype(float)
+
+train_X,test_X,train_y,test_y = train_test_split(df_X,df_y,test_size=0.15,stratify=df_y,shuffle=True,random_state=1234)
 
 tree = DecisionTreeClassifier(min_sample_split=12, max_depth=16)
 tree.fit(train_X.values,train_y.values,categorical_col_idx=range(4,12))
@@ -161,12 +152,3 @@ print(f"test accuracy = {accuracy_score(predictions_test,test_y.values)}")
 print(f"test precision = {precision_score(predictions_test,test_y.values)}")
 print(f"test recall = {recall_score(predictions_test,test_y.values)}")
 
-
-# %%
-a = np.array([[21,3,5],[14,19,2]])
-np.argmin(a[:,0])
-
-# %%
-[None]*5
-
-# %%
