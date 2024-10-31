@@ -1,48 +1,45 @@
 #%%
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import precision_score, recall_score, accuracy_score
 import numpy as np
 import pandas as pd
 
 #%%
 class AdaBoostClassfier:
-    def __init__(self, num_of_trees = 10, max_depth = None, min_samples_split = None, learning_rate = 1.0):
+    def __init__(self, num_of_trees = 10, max_depth = None, min_samples_split = 2):
         self.num_of_trees = num_of_trees
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
-        self.learning_rate = learning_rate
         self.predictors = []
 
     def fit(self, X: np.ndarray, y: np.ndarray):
         weight_vector = np.full((X.shape[0],),1/X.shape[0])
         for tree_idx in range(self.num_of_trees):
-            tree_clf = DecisionTreeClassifier(max_depth=self.max_depth,min_samples_split=self.min_samples_split,sample_weight = weight_vector).fit(X,y)
+            tree_clf = DecisionTreeClassifier(max_depth=self.max_depth,min_samples_split=self.min_samples_split,random_state=1234).fit(X,y,sample_weight = weight_vector)
             
             predictions = tree_clf.predict(X)
             # indices of the wrong predictions
             error_indices = np.nonzero(predictions != y)[0]
-
-            if (error_indices.shape[0] == 0): # found the perfect tree
-                weighted_error_rate = 0
-            else:
             # calculate weighted error rate
-                weighted_error_rate = np.sum(weight_vector[error_indices])
+            weighted_error_rate = np.sum(weight_vector[error_indices])
             # calculate predictor weight
-            predictor_weight = self.learning_rate * np.log((1 - weighted_error_rate)/weighted_error_rate) if weighted_error_rate != 0 else self.learning_rate
-
+            predictor_weight = 0.5 * np.log((1 - weighted_error_rate)/weighted_error_rate)
             self.predictors.append((tree_clf,predictor_weight))
             # update weights
-            weight_vector[error_indices] *= np.exp(predictor_weight)
-            # normalize weights
-            weight_vector /= np.sum(weight_vector)
-
+            weight_vector[error_indices] *= (np.exp(predictor_weight)/np.sum(weight_vector))
             if (error_indices.shape[0] == 0): # found the perfect tree
                 break
+        return self
 
         
     def predict(self, X: np.ndarray) -> np.ndarray:
-        pass
+        # should be num_of_trees x X.shape[0]
+        weighted_predictions = np.array([predictor.predict(X)*weight for (predictor,weight) in self.predictors])
+        return (np.sum(weighted_predictions,axis=0) > 0).astype(int)
+          
+
 
 #%%
 df_data = pd.read_csv("c:/pix/ml/titanic/train.csv")
@@ -60,13 +57,11 @@ df_X = df_X.astype(float)
 train_X,test_X,train_y,test_y = train_test_split(df_X,df_y,test_size=0.15,stratify=df_y,shuffle=True,random_state=1234)
 
 #%%
-#a = np.array([[1,1,0,0,1,1],[1,0,1,0,1,1]]).T
-a = np.array([1,1,0,0,1,1])
-b = np.array([1,0,0,1,1,1])
+adaBoost_clf = AdaBoostClassfier(num_of_trees=400, max_depth=16,min_samples_split=8).fit(train_X.values,train_y.values)
+#%%
+predictions_train = adaBoost_clf.predict(train_X.values)
+predictions_test = adaBoost_clf.predict(test_X.values)
 # %%
-np.nonzero(a != b)
-# %%
-a != b
-# %%
-np.sum(np.empty((1,3)))
+print(accuracy_score(predictions_train,train_y.values))
+print(accuracy_score(predictions_test,test_y.values))
 # %%
