@@ -29,7 +29,7 @@ class MnistClassifier(nn.Module):
         x = self.output_layer(x)
         return nn.Softmax(dim=1)(x)
     
-def train(model, train_X, train_y, valid_X, valid_y,loss_fn, optimizer, epochs = 20, learning_rate=1e-03, batch_size = 250):
+def train(model, train_X, train_y, valid_X, valid_y,loss_fn, optimizer, epochs = 200, learning_rate=1e-02, batch_size = 500, min_epochs_before_stopping = 30, min_valid_loss_improvement = 0.0025):
     
     train_ds = torch.utils.data.TensorDataset(train_X,train_y)
 
@@ -58,8 +58,13 @@ def train(model, train_X, train_y, valid_X, valid_y,loss_fn, optimizer, epochs =
             valid_loss.append(loss_fn(pred_valid,valid_y).item())
             valid_acc.append(accuracy_score(np.argmax(pred_valid.detach().numpy(),axis=1),valid_y.numpy()))
 
+            if epoch > min_epochs_before_stopping:
+                valid_loss_delta = np.mean(valid_loss[-10:]) - np.mean(valid_loss[-20:-10])
+                if valid_loss_delta > 0 or abs(valid_loss_delta) < min_valid_loss_improvement:
+                    print(f"Stopping early at epoch {epoch} - validation loss not improving significantly...")
+                    break
         print(f"epoch : {epoch}, train loss/acc: {train_loss[-1]:0.4f}/{train_acc[-1] * 100:0.2f}, validation loss/acc: {valid_loss[-1]:0.4f}/{valid_acc[-1] * 100:0.2f}")
-    return train_loss,train_acc,valid_loss,valid_acc
+    return train_loss,train_acc,valid_loss,valid_acc,epoch
 
 def test(model, test_X, test_y, loss_fn):
     model.eval()
@@ -72,10 +77,8 @@ def test(model, test_X, test_y, loss_fn):
     return test_loss,test_accuracy
 
 # %%
-epochs = 30
-learning_rate = 1e-03
 
-
+learning_rate = 1e-02
 hidden_layer_size_choices = [64,128,256,512,1024]
 validation_results = []
 for hidden_layer_size in hidden_layer_size_choices:
@@ -83,15 +86,14 @@ for hidden_layer_size in hidden_layer_size_choices:
     model = MnistClassifier(hidden_layer_size)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adagrad(model.parameters(),lr=learning_rate)
-    train_loss, train_acc,valid_loss,valid_acc = train(model,
+    train_loss, train_acc,valid_loss,valid_acc,epochs = train(model,
                                                     torch.as_tensor(train_set[0]),
                                                     torch.as_tensor(train_set[1]),
                                                     torch.as_tensor(valid_set[0]),
                                                     torch.as_tensor(valid_set[1]),
                                                     loss_fn,
-                                                    optimizer,
-                                                    epochs=epochs)
-    validation_results.append((valid_acc,model,hidden_layer_size,train_loss, valid_loss, train_acc,loss_fn))
+                                                    optimizer)
+    validation_results.append((valid_acc,model,hidden_layer_size,train_loss, valid_loss, train_acc,loss_fn,epochs))
 #%%
 best_model = sorted(validation_results,key=lambda tup: tup[0][-1], reverse=True)[0]
 print(f"Best model is with hidden layer size of {best_model[2]} and validation accuracy {best_model[0][-1]*100:0.2f}")
@@ -99,8 +101,8 @@ print(f"Best model is with hidden layer size of {best_model[2]} and validation a
 
 #%%
 fig,axes = plt.subplots(1,2)
-axes[0].plot(range(epochs),best_model[3],best_model[4])
-axes[1].plot(range(epochs),best_model[5],best_model[0])
+axes[0].plot(range(best_model[7] + 1),best_model[3],best_model[4])
+axes[1].plot(range(best_model[7] + 1),best_model[5],best_model[0])
 plt.show()
 
 #%%
@@ -109,5 +111,8 @@ test_loss,test_accuracy = test(best_model[1],
                                torch.as_tensor(test_set[1]),
                                best_model[6])
 
+
+# %%
+best_model[7]
 
 # %%
