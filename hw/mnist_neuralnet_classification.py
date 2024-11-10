@@ -72,17 +72,17 @@ def test(model, test_X, test_y, loss_fn):
     return test_loss,test_accuracy
 
 # %%
-epochs = 50
+epochs = 30
 learning_rate = 1e-03
-model = MnistClassifier(64)
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adagrad(model.parameters(),lr=learning_rate)
+
 
 hidden_layer_size_choices = [64,128,256,512,1024]
 validation_results = []
 for hidden_layer_size in hidden_layer_size_choices:
     print(f"Training/validating model with hidden layer size {hidden_layer_size}...")
     model = MnistClassifier(hidden_layer_size)
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adagrad(model.parameters(),lr=learning_rate)
     train_loss, train_acc,valid_loss,valid_acc = train(model,
                                                     torch.as_tensor(train_set[0]),
                                                     torch.as_tensor(train_set[1]),
@@ -91,10 +91,10 @@ for hidden_layer_size in hidden_layer_size_choices:
                                                     loss_fn,
                                                     optimizer,
                                                     epochs=epochs)
-    validation_results.append((valid_acc,model,hidden_layer_size,train_loss, valid_loss, train_acc))
-
-best_model = sorted(validation_results,key=lambda tup: tup[0], reverse=True)[0]
-print(f"Best model is with hidden layer size of {best_model[2]} and validation accuracy {best_model[0]*100:0.2f}")
+    validation_results.append((valid_acc,model,hidden_layer_size,train_loss, valid_loss, train_acc,loss_fn))
+#%%
+best_model = sorted(validation_results,key=lambda tup: tup[0][-1], reverse=True)[0]
+print(f"Best model is with hidden layer size of {best_model[2]} and validation accuracy {best_model[0][-1]*100:0.2f}")
 
 
 #%%
@@ -107,5 +107,7 @@ plt.show()
 test_loss,test_accuracy = test(best_model[1],
                                torch.as_tensor(test_set[0]),
                                torch.as_tensor(test_set[1]),
-                               loss_fn)
+                               best_model[6])
 
+
+# %%
