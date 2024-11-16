@@ -10,24 +10,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 os.getcwd()
 #%%
+
+#%%
 torch.random.manual_seed(1234)
-with open(".\mnist\mnist.pkl","rb") as f:
+with open("C:\pix\ml\hw\mnist_neural_net\mnist.pkl","rb") as f:
     train_set, valid_set, test_set = pickle.load(f,encoding="latin1")
 # %%
 class MnistClassifier(nn.Module):
     def __init__(self, hidden_layer_size = 512):
         super().__init__()
-        self.input_layer = nn.Linear(28 * 28,hidden_layer_size)
-        self.hidden_layer_1 = nn.Linear(hidden_layer_size,hidden_layer_size)
-        self.output_layer = nn.Linear(hidden_layer_size,10)
+        self.all_layers = nn.Sequential(
+        nn.Linear(28 * 28,hidden_layer_size),
+        nn.ReLU(),
+        nn.Linear(hidden_layer_size,hidden_layer_size),
+        nn.ReLU(),
+        nn.Linear(hidden_layer_size,10),
+        nn.Softmax(dim=1)
+        )
 
     def forward(self,x):
-        x = self.input_layer(x)
-        x = nn.ReLU()(x)
-        x = self.hidden_layer_1(x)
-        x = nn.ReLU()(x)
-        x = self.output_layer(x)
-        return nn.Softmax(dim=1)(x)
+         
+        return self.all_layers(x)
     
 def train(model, train_X, train_y, valid_X, valid_y,loss_fn, optimizer, epochs = 200, learning_rate=1e-02, batch_size = 500, min_epochs_before_stopping = 30, min_valid_loss_improvement = 0.0025):
     
