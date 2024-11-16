@@ -1,0 +1,41 @@
+diab_012
+resampling: SMOTENC(categorical_features=cat_features_idx,random_state=random_state,
+            sampling_strategy={1.0:int(majority_count * 0.75),2.0: int(majority_count * 0.75)})
+mean validation f1_score by class: [0.78568258 0.61629793 0.53647014]
+
+resampling: counts = Counter(train_y)
+counts[1.0] = int(counts[0.0] * 0.75)
+counts[2.0] = int(counts[0.0] * 0.75)
+smoteenn = SMOTEENN(
+         smote=SMOTENC(categorical_features=cat_features_idx,
+                       sampling_strategy=counts),
+        enn = EditedNearestNeighbours(sampling_strategy="all", kind_sel="all"),        
+         random_state=random_state)
+
+train_X_resamp, train_y_resamp = smoteenn.fit_resample(train_X,train_y)
+
+ounts = Counter(test_y)
+counts[1.0] = int(counts[0.0] * 0.75)
+counts[2.0] = int(counts[0.0] * 0.75)
+smoteenn = SMOTEENN(smote=SMOTENC(categorical_features=cat_features_idx,
+                       sampling_strategy=counts),
+        enn = EditedNearestNeighbours(sampling_strategy="all", kind_sel="all"),        
+         random_state=random_state)
+
+test_X_resamp, test_y_resamp = smoteenn.fit_resample(test_X,test_y)
+mean f1_score by class: [0.87295632 0.62102558 0.65230313]
+
+diab_binary:
+no resampling
+"data_sample_strategy": "goss",
+"num_iterations": 200,
+"learning_rate": 0.01,
+"boosting": "dart"
+Max f1 : 0.7344579743787492, iteration : 118
+over-sampling (75%)
+"data_sample_strategy": "goss",
+"num_iterations": 1000,
+"learning_rate": 0.01,
+"boosting": "gbdt",
+Max f1 : 0.864963622500467, iteration : 987
+
