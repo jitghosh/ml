@@ -1,0 +1,1 @@
+{"boosting": "gbdt", "data_sample_strategy": "goss", "learning_rate": 0.01, "num_iterations": 600, "num_leaves": 35}

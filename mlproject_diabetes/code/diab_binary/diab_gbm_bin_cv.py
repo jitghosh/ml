@@ -62,14 +62,13 @@ const_params: dict = {
     "is_unbalance": True,
     "metric": "binary",
     "data_sample_strategy": "goss",
-    "num_iterations": 200,
+    "num_iterations": 1000,
     "learning_rate": 0.01,
-    "boosting": "dart",
+    "boosting": "gbdt",
     "device": "gpu",
     "gpu_platform_id": 1,
     "gpu_device_id": 0,
     "num_gpu":2
-    # "early_stopping_min_delta": 0.0025
 }
 
 
@@ -137,7 +136,8 @@ eval_results = lgbm.cv(
         callable_eval_logloss,
         callable_eval_balanced_accuracy,
         callable_eval_f1_score,
-    ]
+    ],
+    callbacks=[lgbm.early_stopping(30)]
 )
 
 # %%
@@ -145,17 +145,17 @@ print(f"Max f1 : {np.max(eval_results["valid f1-mean"])}, iteration : {np.argmax
 
 
 # %%
-raw_preds = booster.predict(train_X.values)
-preds = [0 if raw_pred < 0.5 else 1 for raw_pred in raw_preds]
-print(
-    f"train_f1_score: {f1_score(preds,train_y,sample_weight=compute_sample_weight(class_weight="balanced", y=train_y))*100}"
-)
-print(
-    f"train_balanced_accuracy: {balanced_accuracy_score(preds,train_y,sample_weight=compute_sample_weight(class_weight="balanced", y=train_y))*100}"
-)
-print(
-    f"train_roc_auc: {roc_auc_score(preds,train_y,sample_weight=compute_sample_weight(class_weight="balanced", y=train_y))*100}"
-)
 # %%
+print(f"Max f1 : {np.max(eval_results["valid f1-mean"])}, iteration : {np.argmax(eval_results["valid f1-mean"])}")
 
+#%%
+fig,ax = plt.subplots(1,1)
+ax.plot(range(len(eval_results["valid binary_logloss-mean"])),eval_results["valid binary_logloss-mean"])
+plt.show()
 # %%
+rawpreds = eval_results["cvbooster"].predict(test_X.values,validate_features = True)
+preds = (np.max(np.array(rawpreds),axis=0) > 0.5).astype(int)
+print(
+    f"test_resampled_f1_score: {f1_score(preds,test_y,sample_weight=compute_sample_weight(class_weight="balanced", y=test_y),pos_label=1.0)*100}"
+)
+#%%

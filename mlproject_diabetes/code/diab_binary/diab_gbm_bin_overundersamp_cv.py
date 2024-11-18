@@ -57,7 +57,7 @@ const_params: dict = {
     "is_unbalance": True,
     "metric": "binary",
     "data_sample_strategy": "goss",
-    "num_iterations": 1000,
+    "num_iterations": 500,
     "learning_rate": 0.01,
     "boosting": "gbdt",
     "device": "gpu",
