@@ -64,7 +64,7 @@ const_params: dict = {
     "data_sample_strategy": "goss",
     "num_iterations": 1000,
     "learning_rate": 0.01,
-    "boosting": "gbdt",
+    "boosting": "dart",
     "device": "gpu",
     "gpu_platform_id": 1,
     "gpu_device_id": 0,
@@ -143,10 +143,6 @@ eval_results = lgbm.cv(
 # %%
 print(f"Max f1 : {np.max(eval_results["valid f1-mean"])}, iteration : {np.argmax(eval_results["valid f1-mean"])}")
 
-
-# %%
-# %%
-print(f"Max f1 : {np.max(eval_results["valid f1-mean"])}, iteration : {np.argmax(eval_results["valid f1-mean"])}")
 
 #%%
 fig,ax = plt.subplots(1,1)
