@@ -25,7 +25,7 @@ class KMeansLearner:
                 if(X_group_for_cluster.shape[0] == 0):
                     continue
                 new_centroid = np.mean(X_group_for_cluster,axis=0)
-                if np.allclose(new_centroid,self.centroids[cluster_idx,:],atol=1e-04):
+                if np.all(new_centroid == self.centroids[cluster_idx,:]):
                     continue
                 else:
                     self.centroids[cluster_idx,:] = new_centroid
