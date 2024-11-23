@@ -25,9 +25,7 @@ class KMeansLearner:
             )
             cluster_memberships = np.argmin(distances, axis=1)
 
-            X_with_cluster = np.hstack((train_X, cluster_memberships.reshape(-1, 1)))[
-                np.argsort(cluster_memberships, axis=0), :
-            ]
+            X_with_cluster = np.hstack((train_X, cluster_memberships.reshape(-1, 1)))
             update_count = 0
             for cluster_idx in range(self.n_clusters):
                 X_group_for_cluster = X_with_cluster[
@@ -56,7 +54,13 @@ df_iris = pd.read_csv(
     header=None,
     names=["petal_length", "petal_width", "sepal_length", "sepal_width", "cls"],
 )
-# plt.scatter(df_iris["petal_length"],df_iris["petal_width"],c=["r" if cls.endswith("setosa") else ("b" if cls.endswith("versicolor") else "g") for cls in df_iris["cls"]])
+kml = KMeansLearner(n_clusters=3)
+data = StandardScaler().fit_transform(df_iris.loc[:,["petal_length","petal_width"]])
+kml.fit(data)
+fig,ax = plt.subplots(1,1)
+ax.scatter(data[:,0],data[:,1],c=["r" if cls.endswith("setosa") else ("b" if cls.endswith("versicolor") else "g") for cls in df_iris["cls"]])
+ax.scatter(kml.centroids[:,0],kml.centroids[:,1],marker='D', c='y')
+
 
 
 # %%
