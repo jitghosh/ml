@@ -9,7 +9,7 @@ from sklearn.metrics import (
     balanced_accuracy_score,
     log_loss,
 )
-from sklearn.feature_selection import GenericUnivariateSelect, chi2
+from sklearn.feature_selection import SelectFpr, chi2
 from sklearn.model_selection import train_test_split, StratifiedKFold, ParameterGrid
 from sklearn.utils import compute_sample_weight
 import matplotlib.pyplot as plt
@@ -26,7 +26,7 @@ df_diab_binary = pd.read_csv("/home/jitghosh/work/pix/ml/mlproject_diabetes/data
 # feature selection
 # use a chi-squared test to select the best features
 p_value = 0.05
-selector = GenericUnivariateSelect(score_func=chi2, mode="fpr", param=p_value).fit(
+selector = SelectFpr(score_func=chi2, alpha=p_value).fit(
     df_diab_binary.drop("Diabetes_binary", axis=1), df_diab_binary["Diabetes_binary"]
 )
 diab_binary_features_selected = selector.get_feature_names_out()
@@ -59,7 +59,7 @@ const_params: dict = {
     "is_unbalance": True,
     "metric": "binary",
     "data_sample_strategy": "goss",
-    "num_iterations": 1000,
+    "num_iterations": 20,
     "learning_rate": 0.01,
     "boosting": "dart",
     "device": "gpu",
@@ -120,21 +120,20 @@ ds_train_X = lgbm.Dataset(
     train_X,
     label=train_y,
     feature_name=all_features,
-    categorical_feature=cat_features,
-    weight=compute_sample_weight(class_weight="balanced", y=train_y),
+    categorical_feature=cat_features
 )
-
-eval_results = lgbm.cv(
+#%%
+evals = {}
+booster = lgbm.train(
     params=const_params,
     train_set=ds_train_X,
-    folds=StratifiedKFold(n_splits=5, shuffle=True, random_state=random_state),
-    return_cvbooster=True,
+    valid_sets=[ds_train_X],
     feval=[
         callable_eval_logloss,
         callable_eval_balanced_accuracy,
         callable_eval_f1_score,
     ],
-    callbacks=[lgbm.early_stopping(30)]
+    callbacks=[lgbm.record_evaluation(evals)]
 )
 
 # %%
