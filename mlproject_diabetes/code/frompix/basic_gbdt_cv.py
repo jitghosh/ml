@@ -35,7 +35,7 @@ def f1(y_pred, y_test_bin):
 def balanced_acc(y_pred, y_test_bin):
     y_true = y_test_bin.get_label()
     y_pred_bin = (y_pred > 0.5).astype(int)  
-    acc = balanced_accuracy_score(y_true, y_pred_bin, 
+    acc = balanced_accuracy_score(y_true, y_pred_bin, adjusted=False,
                   sample_weight= compute_sample_weight(class_weight='balanced', y = y_true))
     return ('balanced accuracy score', acc, True) 
 
@@ -45,37 +45,19 @@ params_dict = {'objective':'binary',
                'is_unbalance': True, 
                'metric':'binary_logloss',
                'data_sample_strategy':'goss',
-               'boosting':'dart',
-               "device": "gpu",
-                "gpu_platform_id": 1,
-                "gpu_device_id": 0,
-                "num_gpu":2}
+               'boosting':'dart'}
 
-kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=777)
-eval_results = []  
+ 
+train_data = lgb.Dataset(X_train_bin, label=y_train_bin)
 
-for train_idx, valid_idx in kf.split(X_train_bin, y_train_bin):
-    X_train, X_valid = X_train_bin[train_idx], X_train_bin[valid_idx]
-    y_train, y_valid = y_train_bin[train_idx], y_train_bin[valid_idx]
-
-    train_data = lgb.Dataset(X_train, label=y_train, categorical_feature= [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
-    valid_data = lgb.Dataset(X_valid, label=y_valid, categorical_feature= [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
-
-    evals = {}  
-
-    model = lgb.train(params = params_dict,
-                      train_set=train_data, 
-                      valid_sets=[train_data, valid_data],
-                      valid_names=['train', 'valid'],
-                      feval=[f1, balanced_acc],
-                      num_boost_round= 500, 
-                      callbacks= [lgb.record_evaluation(evals)])
-    
-    eval_results.append(evals)
+evals = lgb.cv(params = params_dict,
+                    train_set=train_data, 
+                    folds=StratifiedKFold(n_splits=5, shuffle=True, random_state=777),
+                    feval=[f1, balanced_acc],
+                    num_boost_round= 500, 
+                    return_cvbooster=True,
+                    categorical_feature= [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], 
+                    callbacks= [lgb.early_stopping(30)])
 
 # talk about adding sample weight in f1 and adding balanced accuracy score for paper 
-# %%
-fig,ax = plt.subplots(1,1)
-ax.plot(range(len(eval_results[0]["valid"]["f1"])),eval_results[0]["valid"]["f1"])
-plt.show()
 # %%

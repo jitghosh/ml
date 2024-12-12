@@ -59,7 +59,7 @@ const_params: dict = {
     "is_unbalance": True,
     "metric": "binary",
     "data_sample_strategy": "goss",
-    "num_iterations": 1000,
+    "num_iterations": 500,
     "learning_rate": 0.01,
     "boosting": "dart",
     "device": "gpu",
@@ -144,6 +144,7 @@ print(f"Max f1 : {np.max(eval_results["valid f1-mean"])}, iteration : {np.argmax
 #%%
 fig,ax = plt.subplots(1,1)
 ax.plot(range(len(eval_results["valid binary_logloss-mean"])),eval_results["valid binary_logloss-mean"])
+ax.plot(range(len(eval_results["valid f1-mean"])),eval_results["valid f1-mean"])
 plt.show()
 # %%
 rawpreds = eval_results["cvbooster"].predict(test_X.values,validate_features = True)
